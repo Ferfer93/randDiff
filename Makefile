@@ -10,8 +10,10 @@ OBJS=$(subst .cpp,.o,$(SRCS))
 all: mainSim
 
 mainSim: $(SRCS)
+	@mkdir -p bin
 	$(CXX) -std=c++11 $(SRCS) -O2 -o bin/fast_diff
 	$(CXX) -std=c++11 $(SRCSC) -O2 -o bin/uni_corr
 
 clean:
-	rm -f fast_diff uni_corr
+	rm -f bin/*
+	rmdir bin
