@@ -18,7 +18,7 @@ static int isword (unsigned char c) {
 //From the gnu/wc src
 int getword (FILE *fp) {
     int c;
-    int word = 0;
+    //int word = 0;
     while ((c = getc (fp)) != EOF)
     {
         if (isword (c))
@@ -39,6 +39,13 @@ int getword (FILE *fp) {
 }
 
 int main(int argc, char **argv) {
+    //Check arguments
+    if (argc != 4) {
+        printf("Wrong number of arguments;:\n");
+		printf("1. Name of file\n2. Maximum time\n"
+        "3. Delta time\n");
+		return -1;
+    }
     //Count number of lines (copied from wc.c)
     FILE *fp = fopen (argv[1], "r");
     while (getword (fp))
@@ -58,11 +65,11 @@ int main(int argc, char **argv) {
 
 
     //default bin width is 1
-    double deltaT = 1000;
-    double maxTimeCorr = 50000000;
-    int maxDiffChecks = 1000;
+    double deltaT = atof(argv[3]); //10000;
+    double maxTimeCorr = atof(argv[2]); //1000000000;
+    //int maxDiffChecks = 1000;
     int binTotalNum = (int)(maxTimeCorr/deltaT+0.5);
-    int dataSize;
+    //int dataSize;
 
     for (int i = 0; i < binTotalNum; i++) {
         postimes.push_back(0);

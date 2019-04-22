@@ -53,7 +53,9 @@ int main(int argc, char **argv) {
     int NOPERS_FLAG = 1 - atoi(argv[7]);
     int PREDEF_LATT = atoi(argv[8]);
 
-    int initial_spin = 0;
+    //int initial_spin = 0; Unnecesary since the program assumes same initial
+                            //and calculates current one by total number of
+                            //spin flips
 
     int flips = 0;
 
@@ -152,4 +154,5 @@ int coin(double r) {
         return 0;
     else if (r>0.5)
         return 1;
+    return 1; //Will never be reached but compiler complains.
 }
