@@ -57,8 +57,6 @@ int main(int argc, char **argv) {
                             //and calculates current one by total number of
                             //spin flips
 
-    int flips = 0;
-
     double total_time = 0.0;
 
     vector<double> flip_times;
@@ -68,11 +66,19 @@ int main(int argc, char **argv) {
     vector<int> positions;
     positions.push_back(0);
 
+    int curr_position = 0;
+    int past_position = 0;
+    double curr_time = 0;
+    double past_time = 0;
+
     //Initial 10 flip times
-    for (int i = 0; i < 10; i++) {
+    /*for (int i = 0; i < 10; i++) {
         flip_times.push_back(flip_times[flip_times.size()-1]+inv_exp(dist(mt),lambda));
     }
-    flips = 10;
+    flips = 10;*/
+    //That was stupid if flip times are not being saved (which they don't need to)
+    int direction = 1;
+    double flip_time = inv_exp(dist(mt),lambda);
 
     //Initialize lattice energies
     vector<double> energies;
@@ -91,57 +97,48 @@ int main(int argc, char **argv) {
     //Start calculating jump times and change position
     //If the last flip time is less than the jump_time, add 1 flip times
     //Due to this sequential adding, start counting total number of flips from the end.
-    cout << "Sim started:" << endl;
+    outFile.open("times.out", ios::out);
+    cout << "Sim started, (saving to times.out)" << endl;
     for (long int t = 0; t < totalJumps; t++) {
+
+        past_position = curr_position;
+        past_time = curr_time;
+
         if (t%totalJumpsPe == 0) {
           cout.flush();
           cout << "\r" << (t*100)/totalJumps << "%";
         }
         double w = 0;
         if (PREDEF_LATT)
-            w = G0*exp(-energies[positions[positions.size()-1]+totalJumps/2]/T);
+            w = G0*exp(-energies[curr_position+totalJumps/2]/T);
         else
             w = G0*exp(-inv_exp(dist(mt),1.0/Tg)/T); //Set this to a constant for standard diffusion.
         double jTime = inv_exp(dist(mt),w);
-        jump_times.push_back(jump_times[jump_times.size()-1]+jTime);
+        //jump_times.push_back(jump_times[jump_times.size()-1]+jTime);
+        curr_time = past_time + jTime;
         total_time += jTime;
 
         int dir = 0;
         if (!NOPERS_FLAG) {
-            while (total_time > flip_times[flip_times.size()-1]) {
-                flip_times.push_back(flip_times[flip_times.size()-1]+inv_exp(dist(mt),lambda));
-                flips++;
+            while (total_time > flip_time) {
+                flip_time += inv_exp(dist(mt),lambda);
+                direction *= -1;
             }
 
-            int it = flip_times.size()-2;
-            while (!(total_time < flip_times[it+1] && total_time > flip_times[it])) it--; //it now has direction value
-
-            dir = 2*(it % 2)-1;
+            dir = direction;
         }
         else {
             dir = 2*coin(dist(mt))-1;
         }
 
-        positions.push_back(positions[positions.size()-1]+dir);
+        //positions.push_back(positions[positions.size()-1]+dir);
+        curr_position = past_position + dir;
 
-    }
+        if (t%skipOutput == 0)
+        outFile << curr_position << "\t" << FIXED_FLOAT(curr_time) << endl;
 
-    outFile.open("times.out", ios::out);
-
-    int pSize = positions.size();
-    int pSizePe = pSize/100;
-    cout << endl << "Writing data" << endl;
-    for (int i = 0; i < pSize; i++) {
-        if (i%pSizePe == 0) {
-          cout.flush();
-          cout << "\r" << i/pSizePe << "%";
-        }
-        if (i%skipOutput == 0)
-        outFile << positions[i] << "\t" << FIXED_FLOAT(jump_times[i]) << endl;
     }
     cout << endl;
-    outFile.close();
-
     return 0;
 }
 
