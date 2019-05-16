@@ -27,14 +27,15 @@ int main(int argc, char **argv) {
 
     ofstream outFile;
 
-    if (argc != 9) {
+    if (argc != 10) {
 		printf("Wrong number of arguments;:\n");
 		printf("1. Number of jumps\n2. Output data every N jumps\n"
         "3. Lambda, spin change rate\n4. Temperature\n"
         "5. Temperature of the trap distribution\n"
         "6. G0 Microscopic frequency scale\n"
         "7. Persistence flag (0: no persistence)\n"
-        "8. Predefined lattice flag (0: generate on the fly)\n");
+        "8. Predefined lattice flag (0: generate on the fly)\n"
+        "9. By how much to divide the lattice\n");
 		return -1;
 	}
 
@@ -52,6 +53,7 @@ int main(int argc, char **argv) {
     long int totalJumpsPe = totalJumps/100;
     int NOPERS_FLAG = 1 - atoi(argv[7]);
     int PREDEF_LATT = atoi(argv[8]);
+    int divider = atoi(argv[9]);
 
     //int initial_spin = 0; Unnecesary since the program assumes same initial
                             //and calculates current one by total number of
@@ -84,10 +86,10 @@ int main(int argc, char **argv) {
     vector<double> energies;
     if (PREDEF_LATT) {
         cout << "Generating lattice traps" << endl;
-        for (long int i=0; i < totalJumps*2L; i++) {
-            if (i%(totalJumpsPe*2L) == 0) {
+        for (long int i=0; i < totalJumps*2L/divider; i++) {
+            if (i%(totalJumpsPe*2L/divider) == 0) {
               cout.flush();
-              cout << "\r" << (i*100)/(2L*totalJumps) << "%";
+              cout << "\r" << (i*100)/(2L*totalJumps/divider) << "%";
             }
             energies.push_back(inv_exp(dist(mt),1.0/Tg));
         }
@@ -104,13 +106,18 @@ int main(int argc, char **argv) {
         past_position = curr_position;
         past_time = curr_time;
 
+        if (curr_position > totalJumps/divider || curr_position < -totalJumps/divider) {
+            cout << endl << "ERROR: Lattice too small" << endl;
+            return -1;
+        }
+
         if (t%totalJumpsPe == 0) {
           cout.flush();
           cout << "\r" << (t*100)/totalJumps << "%";
         }
         double w = 0;
         if (PREDEF_LATT)
-            w = G0*exp(-energies[curr_position+totalJumps/2]/T);
+            w = G0*exp(-energies[curr_position+totalJumps/divider]/T);
         else
             w = G0*exp(-inv_exp(dist(mt),1.0/Tg)/T); //Set this to a constant for standard diffusion.
         double jTime = inv_exp(dist(mt),w);
