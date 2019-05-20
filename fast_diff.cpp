@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 
     ofstream outFile;
 
-    if (argc != 10) {
+    if (argc != 11) {
 		printf("Wrong number of arguments;:\n");
 		printf("1. Number of jumps\n2. Output data every N jumps\n"
         "3. Lambda, spin change rate\n4. Temperature\n"
@@ -35,7 +35,8 @@ int main(int argc, char **argv) {
         "6. G0 Microscopic frequency scale\n"
         "7. Persistence flag (0: no persistence)\n"
         "8. Predefined lattice flag (0: generate on the fly)\n"
-        "9. By how much to divide the lattice\n");
+        "9. By how much to divide the lattice\n"
+        "10. Direction flip cutoff within a single trap\n");
 		return -1;
 	}
 
@@ -54,6 +55,7 @@ int main(int argc, char **argv) {
     int NOPERS_FLAG = 1 - atoi(argv[7]);
     int PREDEF_LATT = atoi(argv[8]);
     int divider = atoi(argv[9]);
+    int cutoff = atoi(argv[10]);
 
     //int initial_spin = 0; Unnecesary since the program assumes same initial
                             //and calculates current one by total number of
@@ -72,6 +74,8 @@ int main(int argc, char **argv) {
     int past_position = 0;
     double curr_time = 0;
     double past_time = 0;
+
+    long int cutoffCounter = 0;
 
     //Initial 10 flip times
     /*for (int i = 0; i < 10; i++) {
@@ -127,9 +131,15 @@ int main(int argc, char **argv) {
 
         int dir = 0;
         if (!NOPERS_FLAG) {
+            int cutoff_aux = 0;
             while (total_time > flip_time) {
+                if (cutoff_aux > cutoff && cutoff != 0) {
+                    cutoffCounter ++;
+                    break;
+                }
                 flip_time += inv_exp(dist(mt),lambda);
                 direction *= -1;
+                cutoff_aux ++;
             }
 
             dir = direction;
@@ -146,6 +156,8 @@ int main(int argc, char **argv) {
 
     }
     cout << endl;
+    if (cutoff != 0)
+        cout << "Cutoff applied in " << 100.0f*((double)cutoffCounter/(double)totalJumps) << "% of the jumps" << endl;
     return 0;
 }
 
